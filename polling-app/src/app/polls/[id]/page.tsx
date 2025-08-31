@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, CheckCircle } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import { DateDisplay } from "@/components/DateDisplay";
+import { PollVotingForm } from "@/components/PollVotingForm";
 
 interface PollOption {
   id: string;
@@ -26,53 +27,35 @@ export default function PollPage() {
   const router = useRouter();
   const [poll, setPoll] = useState<Poll | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [hasVoted, setHasVoted] = useState(false);
 
   useEffect(() => {
-    // For now, we'll create a mock poll since we don't have a real database
-    // In a real app, you'd fetch this from your API
-    const mockPoll: Poll = {
-      id: params.id as string,
-      title: "Sample Poll",
-      description: "This is a sample poll created for demonstration purposes.",
-      options: [
-        { id: "option_0", text: "Option 1", votes: 5 },
-        { id: "option_1", text: "Option 2", votes: 3 },
-        { id: "option_2", text: "Option 3", votes: 7 },
-      ],
-      createdAt: new Date().toISOString(),
-      totalVotes: 15,
+    const fetchPoll = async () => {
+      try {
+        const response = await fetch(`/api/polls/${params.id}`);
+        
+        if (!response.ok) {
+          if (response.status === 404) {
+            setPoll(null);
+          } else {
+            throw new Error('Failed to fetch poll');
+          }
+        } else {
+          const pollData = await response.json();
+          setPoll(pollData);
+        }
+      } catch (error) {
+        console.error('Error fetching poll:', error);
+        setPoll(null);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
-    setPoll(mockPoll);
-    setIsLoading(false);
+    fetchPoll();
   }, [params.id]);
 
-  const handleVote = (optionId: string) => {
-    if (!poll || hasVoted) return;
-
-    setPoll(prev => {
-      if (!prev) return prev;
-      
-      const updatedOptions = prev.options.map(option => 
-        option.id === optionId 
-          ? { ...option, votes: option.votes + 1 }
-          : option
-      );
-
-      return {
-        ...prev,
-        options: updatedOptions,
-        totalVotes: prev.totalVotes + 1,
-      };
-    });
-
-    setHasVoted(true);
-  };
-
-  const getPercentage = (votes: number) => {
-    if (!poll || poll.totalVotes === 0) return 0;
-    return Math.round((votes / poll.totalVotes) * 100);
+  const handleVoteSubmitted = (updatedPoll: Poll) => {
+    setPoll(updatedPoll);
   };
 
   if (isLoading) {
@@ -99,6 +82,8 @@ export default function PollPage() {
       </div>
     );
   }
+
+
 
   if (!poll) {
     return (
@@ -130,67 +115,16 @@ export default function PollPage() {
           </Button>
         </div>
 
-        <Card className="w-full max-w-2xl mx-auto">
-          <CardHeader>
-            <CardTitle className="text-2xl">{poll.title}</CardTitle>
-            {poll.description && (
-              <CardDescription className="text-base">
-                {poll.description}
-              </CardDescription>
-            )}
-            <div className="text-sm text-gray-500">
-              Created on {new Date(poll.createdAt).toLocaleDateString()}
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="text-sm text-gray-600">
-              Total votes: {poll.totalVotes}
-            </div>
-            
-            <div className="space-y-3">
-              {poll.options.map((option) => (
-                <div key={option.id} className="relative">
-                  <Button
-                    variant="outline"
-                    className={`w-full justify-between h-auto p-4 ${
-                      hasVoted ? "cursor-default" : "hover:bg-gray-50"
-                    }`}
-                    onClick={() => handleVote(option.id)}
-                    disabled={hasVoted}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-left">{option.text}</span>
-                      {hasVoted && (
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                      )}
-                    </div>
-                    <div className="text-right">
-                      <div className="font-medium">{option.votes} votes</div>
-                      <div className="text-sm text-gray-500">
-                        {getPercentage(option.votes)}%
-                      </div>
-                    </div>
-                  </Button>
-                  
-                  {hasVoted && (
-                    <div 
-                      className="absolute top-0 left-0 h-full bg-blue-100 rounded-md transition-all duration-500"
-                      style={{ width: `${getPercentage(option.votes)}%` }}
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
-
-            {hasVoted && (
-              <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-md">
-                <p className="text-green-800 text-center">
-                  Thank you for voting! Your vote has been recorded.
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <div className="space-y-4">
+          <div className="text-sm text-gray-500 text-center">
+            Created on <DateDisplay dateString={poll.createdAt} />
+          </div>
+          
+          <PollVotingForm 
+            poll={poll} 
+            onVoteSubmitted={handleVoteSubmitted} 
+          />
+        </div>
       </div>
     </div>
   );

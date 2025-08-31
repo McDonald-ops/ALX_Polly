@@ -78,11 +78,58 @@ export default function Home() {
             </li>
             <li className="tracking-[-.01em]">
               Add a title, description, and multiple options
-            </li>
-            <li className="tracking-[-.01em]">
+          </li>
+          <li className="tracking-[-.01em]">
               Share the poll link with others to collect votes
-            </li>
-          </ol>
+          </li>
+        </ol>
+
+          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
+            <p className="text-blue-800 text-sm">
+              <strong>Note:</strong> If you encounter database errors when creating polls, 
+              please run the database setup first. See <code className="bg-blue-100 px-1 rounded">DATABASE_SETUP.md</code> for instructions.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-8 text-center sm:text-left">
+          <h2 className="text-2xl font-semibold mb-4">Test the Voting Interface</h2>
+          <p className="text-gray-600 mb-4">
+            Try out the new radio button voting interface with these sample polls:
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Programming Languages</CardTitle>
+                <CardDescription>
+                  What's your favorite programming language?
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Link href="/polls/mock-poll-1">
+                  <Button className="w-full">
+                    Vote Now
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Web Frameworks</CardTitle>
+                <CardDescription>
+                  Which framework do you prefer for web development?
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Link href="/polls/mock-poll-2">
+                  <Button className="w-full">
+                    Vote Now
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </main>
     </div>

@@ -1,0 +1,210 @@
+"use client";
+
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { CheckCircle, Vote } from "lucide-react";
+
+const voteSchema = z.object({
+  selectedOption: z.string().min(1, "Please select an option to vote"),
+});
+
+type VoteFormData = z.infer<typeof voteSchema>;
+
+interface PollOption {
+  id: string;
+  text: string;
+  votes: number;
+}
+
+interface Poll {
+  id: string;
+  title: string;
+  description: string;
+  options: PollOption[];
+  createdAt: string;
+  totalVotes: number;
+}
+
+interface PollVotingFormProps {
+  poll: Poll;
+  onVoteSubmitted: (updatedPoll: Poll) => void;
+}
+
+export function PollVotingForm({ poll, onVoteSubmitted }: PollVotingFormProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasVoted, setHasVoted] = useState(false);
+  const [submissionMessage, setSubmissionMessage] = useState("");
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    watch,
+  } = useForm<VoteFormData>({
+    resolver: zodResolver(voteSchema),
+  });
+
+  const selectedOption = watch("selectedOption");
+
+  const onSubmit = async (data: VoteFormData) => {
+    setIsSubmitting(true);
+    
+    try {
+      const response = await fetch(`/api/polls/${poll.id}/vote`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ optionId: data.selectedOption }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to record vote');
+      }
+
+      const updatedPoll = await response.json();
+      onVoteSubmitted(updatedPoll);
+      setHasVoted(true);
+      setSubmissionMessage("Thank you for voting! Your vote has been recorded successfully.");
+    } catch (error) {
+      console.error('Error voting:', error);
+      setSubmissionMessage("Failed to record your vote. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const getPercentage = (votes: number) => {
+    if (!poll || poll.totalVotes === 0) return 0;
+    return Math.round((votes / poll.totalVotes) * 100);
+  };
+
+  if (hasVoted) {
+    return (
+      <Card className="w-full max-w-2xl mx-auto">
+        <CardHeader>
+          <CardTitle className="text-2xl flex items-center gap-2">
+            <CheckCircle className="h-6 w-6 text-green-500" />
+            Vote Submitted
+          </CardTitle>
+          <CardDescription>
+            {submissionMessage}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="text-sm text-gray-600 mb-4">
+              Total votes: {poll.totalVotes}
+            </div>
+            
+            <div className="space-y-3">
+              {poll.options.map((option) => (
+                <div key={option.id} className="relative p-4 border rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="font-medium">{option.text}</span>
+                      {selectedOption === option.id && (
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <div className="font-medium">{option.votes} votes</div>
+                      <div className="text-sm text-gray-500">
+                        {getPercentage(option.votes)}%
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div 
+                    className="absolute top-0 left-0 h-full bg-blue-100 rounded-lg transition-all duration-500"
+                    style={{ width: `${getPercentage(option.votes)}%` }}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="w-full max-w-2xl mx-auto">
+      <CardHeader>
+        <CardTitle className="text-2xl">{poll.title}</CardTitle>
+        {poll.description && (
+          <CardDescription className="text-base">
+            {poll.description}
+          </CardDescription>
+        )}
+        <div className="text-sm text-gray-500">
+          Total votes: {poll.totalVotes}
+        </div>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <div className="space-y-4">
+            <Label className="text-base font-medium">Select your vote:</Label>
+            
+            <RadioGroup
+              value={selectedOption}
+              onValueChange={(value) => {
+                // This will be handled by react-hook-form
+              }}
+              className="space-y-3"
+            >
+              {poll.options.map((option) => (
+                <div key={option.id} className="flex items-center space-x-3">
+                  <RadioGroupItem
+                    value={option.id}
+                    id={option.id}
+                    {...register("selectedOption")}
+                  />
+                  <Label
+                    htmlFor={option.id}
+                    className="flex-1 cursor-pointer text-base"
+                  >
+                    {option.text}
+                  </Label>
+                  <div className="text-sm text-gray-500">
+                    {option.votes} votes ({getPercentage(option.votes)}%)
+                  </div>
+                </div>
+              ))}
+            </RadioGroup>
+            
+            {errors.selectedOption && (
+              <p className="text-red-500 text-sm">
+                {errors.selectedOption.message}
+              </p>
+            )}
+          </div>
+
+          <Button
+            type="submit"
+            disabled={isSubmitting || !selectedOption}
+            className="w-full"
+          >
+            {isSubmitting ? (
+              <div className="flex items-center gap-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                Submitting Vote...
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Vote className="h-4 w-4" />
+                Submit Vote
+              </div>
+            )}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
+  );
+}

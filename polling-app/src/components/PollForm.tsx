@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -26,7 +26,6 @@ interface PollFormProps {
 
 export function PollForm({ onSubmit, isLoading = false }: PollFormProps) {
   const [options, setOptions] = useState<string[]>(["", ""]);
-  const [isClient, setIsClient] = useState(false);
 
   const {
     register,
@@ -42,13 +41,6 @@ export function PollForm({ onSubmit, isLoading = false }: PollFormProps) {
       options: ["", ""],
     },
   });
-
-  // Ensure we're on the client side to prevent hydration issues
-  React.useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  const watchedOptions = watch("options");
 
   const addOption = () => {
     if (options.length < 10) {
@@ -80,36 +72,7 @@ export function PollForm({ onSubmit, isLoading = false }: PollFormProps) {
     await onSubmit(formData);
   };
 
-  // Don't render until we're on the client side
-  if (!isClient) {
-    return (
-      <Card className="w-full max-w-2xl mx-auto">
-        <CardHeader>
-          <CardTitle>Create New Poll</CardTitle>
-          <CardDescription>
-            Create a new poll with a title, description, and multiple options for voting.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
-            </div>
-            <div className="space-y-2">
-              <div className="h-20 bg-gray-200 rounded animate-pulse"></div>
-            </div>
-            <div className="space-y-4">
-              <div className="h-6 bg-gray-200 rounded animate-pulse"></div>
-              <div className="space-y-3">
-                <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
-                <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
