@@ -1,5 +1,35 @@
 ---
-description:
-globs:
+description: Project Rules for SnapAPI (polling-app)
+globs:  - "src/**/*.ts"
+        - "src/**/*.tsx"
 alwaysApply: true
 ---
+
+# Project Rules for SnapAPI (polling-app)
+
+1. **Folder Structure**
+   - Place pages in `/src/app/`
+   - API routes go under `/src/app/api/`
+   - Poll-related features live in `/src/app/polls/`
+   - Shared components go under `/src/components/`
+
+2. **Forms**
+   - Always use `react-hook-form` for form handling.
+   - Use `shadcn/ui` components (`<Input>`, `<Button>`, `<Label>`) for UI.
+   - Form validation should use `zod` schemas where possible.
+
+3. **Supabase Usage**
+   - Use `@supabase/supabase-js` for client queries.
+   - Auth context must be provided using `@supabase/ssr`.
+   - Store environment variables in `.env.local`.
+
+4. **Code Style**
+   - Use TypeScript (`.tsx` for components).
+   - Use absolute imports with `@/` alias (e.g., `import Button from "@/components/Button"`).
+   - Prefer functional components with hooks.
+
+5. **Example Pattern**
+   - When creating a new poll:
+     - Create a page at `/src/app/polls/new/page.tsx`.
+     - Use a `<PollForm />` component from `/src/components/PollForm.tsx`.
+     - Save poll data to Supabase inside an API route (`/src/app/api/polls/route.ts`).

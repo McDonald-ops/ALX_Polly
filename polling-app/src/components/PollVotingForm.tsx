@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -46,8 +46,10 @@ export function PollVotingForm({ poll, onVoteSubmitted }: PollVotingFormProps) {
     handleSubmit,
     formState: { errors },
     watch,
+    control,
   } = useForm<VoteFormData>({
     resolver: zodResolver(voteSchema),
+    defaultValues: { selectedOption: "" },
   });
 
   const selectedOption = watch("selectedOption");
@@ -151,33 +153,37 @@ export function PollVotingForm({ poll, onVoteSubmitted }: PollVotingFormProps) {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="space-y-4">
             <Label className="text-base font-medium">Select your vote:</Label>
-            
-            <RadioGroup
-              value={selectedOption}
-              onValueChange={(value) => {
-                // This will be handled by react-hook-form
-              }}
-              className="space-y-3"
-            >
-              {poll.options.map((option) => (
-                <div key={option.id} className="flex items-center space-x-3">
-                  <RadioGroupItem
-                    value={option.id}
-                    id={option.id}
-                    {...register("selectedOption")}
-                  />
-                  <Label
-                    htmlFor={option.id}
-                    className="flex-1 cursor-pointer text-base"
-                  >
-                    {option.text}
-                  </Label>
-                  <div className="text-sm text-gray-500">
-                    {option.votes} votes ({getPercentage(option.votes)}%)
-                  </div>
-                </div>
-              ))}
-            </RadioGroup>
+            <Controller
+              name="selectedOption"
+              control={control}
+              render={({ field }) => (
+                <RadioGroup
+                  name={field.name}
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  className="space-y-3"
+                >
+                  {poll.options.map((option) => (
+                    <div key={option.id} className="flex items-center space-x-3">
+                      <RadioGroupItem
+                        value={option.id}
+                        id={option.id}
+                        aria-checked={field.value === option.id}
+                      />
+                      <Label
+                        htmlFor={option.id}
+                        className="flex-1 cursor-pointer text-base"
+                      >
+                        {option.text}
+                      </Label>
+                      <div className="text-sm text-gray-500">
+                        {option.votes} votes ({getPercentage(option.votes)}%)
+                      </div>
+                    </div>
+                  ))}
+                </RadioGroup>
+              )}
+            />
             
             {errors.selectedOption && (
               <p className="text-red-500 text-sm">

@@ -127,27 +127,36 @@ export function PollForm({ onSubmit, isLoading = false }: PollFormProps) {
             </div>
 
             <div className="space-y-3">
-              {options.map((option, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <Input
-                    placeholder={`Option ${index + 1}...`}
-                    value={option}
-                    onChange={(e) => updateOption(index, e.target.value)}
-                    className={errors.options?.[index] ? "border-red-500" : ""}
-                  />
-                  {options.length > 2 && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => removeOption(index)}
-                      className="flex-shrink-0"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              ))}
+              {options.map((option, index) => {
+                const fieldId = `option-${index}`;
+                const fieldName = `options[${index}]` as const;
+                return (
+                  <div key={index} className="flex items-center gap-2">
+                    <Label htmlFor={fieldId} className="sr-only">{`Option ${index + 1}`}</Label>
+                    <Input
+                      id={fieldId}
+                      name={fieldName}
+                      placeholder={`Option ${index + 1}...`}
+                      value={option}
+                      onChange={(e) => updateOption(index, e.target.value)}
+                      className={errors.options?.[index] ? "border-red-500" : ""}
+                      aria-invalid={!!errors.options?.[index]}
+                    />
+                    {options.length > 2 && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => removeOption(index)}
+                        className="flex-shrink-0"
+                        aria-label={`Remove option ${index + 1}`}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
             {errors.options && (
