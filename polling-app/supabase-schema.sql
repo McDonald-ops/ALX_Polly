@@ -79,6 +79,10 @@ CREATE POLICY "Allow public insert access to poll options" ON poll_options
 CREATE POLICY "Allow public insert access to votes" ON votes
   FOR INSERT WITH CHECK (true);
 
+-- Allow updates so the trigger can increment/decrement vote counts under RLS
+CREATE POLICY "Allow public update access to poll options" ON poll_options
+  FOR UPDATE USING (true) WITH CHECK (true);
+
 -- Create a view for poll results
 CREATE VIEW poll_results AS
 SELECT 
@@ -94,3 +98,6 @@ FROM polls p
 LEFT JOIN poll_options po ON p.id = po.poll_id
 LEFT JOIN votes v ON p.id = v.poll_id
 GROUP BY p.id, p.title, p.description, p.created_at, po.id, po.text, po.votes;
+
+-- Ensure the trigger function runs with elevated privileges to bypass RLS
+ALTER FUNCTION update_poll_option_votes() SECURITY DEFINER;

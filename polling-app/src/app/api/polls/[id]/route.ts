@@ -63,3 +63,32 @@ export async function GET(
     );
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    // Delete the poll; cascading FK will remove related options and votes
+    const { error } = await supabase
+      .from('polls')
+      .delete()
+      .eq('id', params.id);
+
+    if (error) {
+      // RLS may block deletes if policy not present
+      const status = error.code === '42501' ? 403 : 500;
+      return NextResponse.json(
+        { error: 'Failed to delete poll', details: error.message },
+        { status }
+      );
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}

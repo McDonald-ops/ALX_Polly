@@ -1,8 +1,8 @@
-import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, BarChart3, Users } from "lucide-react";
+import PollList from "@/components/PollList";
 
 export default function Home() {
   return (
@@ -130,6 +130,11 @@ export default function Home() {
               </CardContent>
             </Card>
           </div>
+        </div>
+
+        <div className="mt-12 w-full">
+          <h2 className="text-2xl font-semibold mb-4">Recent Polls</h2>
+          <PollList />
         </div>
       </main>
     </div>
