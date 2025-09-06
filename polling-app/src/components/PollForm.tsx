@@ -42,27 +42,25 @@ export function PollForm({ onSubmit, isLoading = false }: PollFormProps) {
     },
   });
 
+  const updateOptionsAndForm = (newOptions: string[]) => {
+    setOptions(newOptions);
+    setValue("options", newOptions);
+  };
+
   const addOption = () => {
     if (options.length < 10) {
-      const newOptions = [...options, ""];
-      setOptions(newOptions);
-      setValue("options", newOptions);
+      updateOptionsAndForm([...options, ""]);
     }
   };
 
   const removeOption = (index: number) => {
     if (options.length > 2) {
-      const newOptions = options.filter((_, i) => i !== index);
-      setOptions(newOptions);
-      setValue("options", newOptions);
+      updateOptionsAndForm(options.filter((_, i) => i !== index));
     }
   };
 
   const updateOption = (index: number, value: string) => {
-    const newOptions = [...options];
-    newOptions[index] = value;
-    setOptions(newOptions);
-    setValue("options", newOptions);
+    updateOptionsAndForm(options.map((option, i) => i === index ? value : option));
   };
 
   const handleFormSubmit = async (data: PollFormData) => {
