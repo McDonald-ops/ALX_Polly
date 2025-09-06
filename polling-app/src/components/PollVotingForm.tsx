@@ -10,18 +10,29 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { CheckCircle, Vote } from "lucide-react";
 
+/**
+ * Zod schema for vote validation.
+ * 
+ * Ensures a user has selected an option before allowing vote submission.
+ */
 const voteSchema = z.object({
   selectedOption: z.string().min(1, "Please select an option to vote"),
 });
 
 type VoteFormData = z.infer<typeof voteSchema>;
 
+/**
+ * Represents a poll option with vote count for the voting interface.
+ */
 interface PollOption {
   id: string;
   text: string;
   votes: number;
 }
 
+/**
+ * Represents a complete poll with options for the voting interface.
+ */
 interface Poll {
   id: string;
   title: string;
@@ -32,10 +43,29 @@ interface Poll {
 }
 
 interface PollVotingFormProps {
+  /** The poll data to display and vote on */
   poll: Poll;
+  /** Callback function called when vote is successfully submitted */
   onVoteSubmitted: (updatedPoll: Poll) => void;
 }
 
+/**
+ * PollVotingForm Component
+ * 
+ * A comprehensive voting interface that handles:
+ * - Radio button selection with React Hook Form Controller
+ * - Real-time vote submission to the API
+ * - Post-vote results display with visual progress bars
+ * - Loading states and error handling
+ * - Percentage calculations for vote visualization
+ * 
+ * The component uses a controlled RadioGroup to prevent the common
+ * "uncontrolled to controlled" React warning and ensures proper
+ * form state management.
+ * 
+ * @param {PollVotingFormProps} props - Component props
+ * @returns {JSX.Element} The rendered voting interface
+ */
 export function PollVotingForm({ poll, onVoteSubmitted }: PollVotingFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasVoted, setHasVoted] = useState(false);
@@ -54,6 +84,17 @@ export function PollVotingForm({ poll, onVoteSubmitted }: PollVotingFormProps) {
 
   const selectedOption = watch("selectedOption");
 
+  /**
+   * Handles vote submission to the API.
+   * 
+   * This function manages the complete voting workflow:
+   * 1. Sets loading state to prevent double submissions
+   * 2. Sends vote data to the API endpoint
+   * 3. Updates the parent component with fresh poll data
+   * 4. Shows success/error messages to the user
+   * 
+   * @param {VoteFormData} data - Form data containing selected option ID
+   */
   const onSubmit = async (data: VoteFormData) => {
     setIsSubmitting(true);
     
@@ -70,6 +111,7 @@ export function PollVotingForm({ poll, onVoteSubmitted }: PollVotingFormProps) {
         throw new Error('Failed to record vote');
       }
 
+      // Get updated poll data with new vote counts
       const updatedPoll = await response.json();
       onVoteSubmitted(updatedPoll);
       setHasVoted(true);
@@ -82,6 +124,15 @@ export function PollVotingForm({ poll, onVoteSubmitted }: PollVotingFormProps) {
     }
   };
 
+  /**
+   * Calculates the percentage of votes for a specific option.
+   * 
+   * Handles edge cases where poll data might be missing or
+   * total votes is zero to prevent division by zero errors.
+   * 
+   * @param {number} votes - Number of votes for the specific option
+   * @returns {number} Percentage rounded to nearest integer (0-100)
+   */
   const getPercentage = (votes: number) => {
     if (!poll || poll.totalVotes === 0) return 0;
     return Math.round((votes / poll.totalVotes) * 100);

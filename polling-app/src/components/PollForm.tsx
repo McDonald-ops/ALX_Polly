@@ -11,6 +11,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, X } from "lucide-react";
 
+/**
+ * Zod schema for poll form validation.
+ * 
+ * Defines client-side validation rules that mirror the server-side validation
+ * to provide immediate feedback to users and reduce unnecessary API calls.
+ */
 const pollSchema = z.object({
   title: z.string().min(1, "Title is required").max(100, "Title must be less than 100 characters"),
   description: z.string().max(500, "Description must be less than 500 characters").optional(),
@@ -20,10 +26,29 @@ const pollSchema = z.object({
 type PollFormData = z.infer<typeof pollSchema>;
 
 interface PollFormProps {
+  /** Callback function called when form is submitted with valid data */
   onSubmit: (data: PollFormData) => Promise<void>;
+  /** Whether the form is currently submitting (disables submit button) */
   isLoading?: boolean;
 }
 
+/**
+ * PollForm Component
+ * 
+ * A dynamic form component for creating new polls with the following features:
+ * - Real-time validation using React Hook Form + Zod
+ * - Dynamic option management (add/remove 2-10 options)
+ * - Optimized state management with consolidated updates
+ * - Accessible form controls with proper labels and ARIA attributes
+ * - Responsive design with shadcn/ui components
+ * 
+ * The component maintains two sources of truth for options:
+ * 1. Local state for immediate UI updates
+ * 2. React Hook Form state for validation and submission
+ * 
+ * @param {PollFormProps} props - Component props
+ * @returns {JSX.Element} The rendered poll creation form
+ */
 export function PollForm({ onSubmit, isLoading = false }: PollFormProps) {
   const [options, setOptions] = useState<string[]>(["", ""]);
 
@@ -42,23 +67,54 @@ export function PollForm({ onSubmit, isLoading = false }: PollFormProps) {
     },
   });
 
+  /**
+   * Centralized function to update both local state and form state.
+   * 
+   * This prevents code duplication and ensures both state sources
+   * stay synchronized when options are modified.
+   * 
+   * @param {string[]} newOptions - The updated options array
+   */
   const updateOptionsAndForm = (newOptions: string[]) => {
     setOptions(newOptions);
     setValue("options", newOptions);
   };
 
+  /**
+   * Adds a new empty option to the poll.
+   * 
+   * Enforces the maximum limit of 10 options to prevent UI clutter
+   * and maintain reasonable poll complexity.
+   */
   const addOption = () => {
     if (options.length < 10) {
       updateOptionsAndForm([...options, ""]);
     }
   };
 
+  /**
+   * Removes an option at the specified index.
+   * 
+   * Enforces the minimum limit of 2 options to ensure polls remain
+   * meaningful and functional.
+   * 
+   * @param {number} index - The index of the option to remove
+   */
   const removeOption = (index: number) => {
     if (options.length > 2) {
       updateOptionsAndForm(options.filter((_, i) => i !== index));
     }
   };
 
+  /**
+   * Updates the text content of a specific option.
+   * 
+   * Uses immutable update pattern with map() to ensure React
+   * properly detects state changes and triggers re-renders.
+   * 
+   * @param {number} index - The index of the option to update
+   * @param {string} value - The new text content
+   */
   const updateOption = (index: number, value: string) => {
     updateOptionsAndForm(options.map((option, i) => i === index ? value : option));
   };
